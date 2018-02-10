@@ -1,0 +1,112 @@
+<html>
+    <head>
+        <title>Cryptography API expirments</title>
+    </head>
+    <body>
+        <h1>Cryptography API expirement</h1>
+        <p id="rm">Loading...</p>
+
+        <script type="application/javascript">
+function append_text( to, name, text ) {
+	const output = document.createElement( name );
+	output.innerText = text;
+	to.appendChild(output);
+	return output;
+}
+
+function section( root, title ) {
+	const container = document.createElement("div");
+	root.appendChild(container);
+	append_text(container, "h3", title );
+	return root;
+}
+
+function show_random( body, crypto ) {
+	const container = section(body, "getRandomValues(UInt8Array[4])");
+	const list = document.createElement("ol");
+	container.appendChild(list);
+
+	const targetList = new Uint8Array(4);
+	crypto.getRandomValues(targetList);
+	targetList.map( (i) => {
+		append_text(list, "li", ""+  i);
+    });
+}
+
+const int_hex_digit = ['0','1','2','3','4','5','6','7','8','9','A','B','C','D','E','F'];
+const int_hex_table = [];
+int_hex_digit.forEach( (l) => {
+	int_hex_digit.forEach( (r) => {
+		int_hex_table.push("" + l + r)
+    });
+});
+
+function int_hex( i ) {
+	const h = int_hex_table[i];
+    return h;
+}
+
+function buffer_to_array( buffer ){
+	const output = new Array();
+	for ( let i in buffer ){
+		const v = buffer[i];
+		output.push(v);
+    }
+    return output;
+}
+
+async function show_digest_sha256( root, subtle ) {
+	const container = section(root, "SHA256");
+	const value = new TextEncoder("utf8").encode("test");
+	const digest = subtle.digest("SHA-256", value);
+	digest.then((rawBuffer) => {
+		const hex = new Uint8Array(rawBuffer);
+		const text = buffer_to_array(hex).map( (h) => int_hex(h)).join(":");
+		append_text( container, "p", "Digest: " + text);
+		append_text( container, "p", "UInt8: " + hex);
+    });
+
+}
+
+function main() {
+	console.log("Loading...");
+	const id = document.getElementById("rm");
+	id.remove();
+
+	const body = document.body;
+
+	//Plain Crypto
+	if( !window.crypto ) {
+		append_text( body, "pre", "Crypto API not available" );
+		return;
+    }
+	append_text( body, "p", "+ Crypto API"  );
+	const crypto = window.crypto;
+
+	//Subtle
+	if( !window.crypto.subtle ) {
+		append_text( body, "pre", "Subtle Crypto API is not available" );
+		return;
+	}
+	append_text( body, "p", "+ Subtle Crypto API"  );
+	const subtle = crypto.subtle;
+
+	//Random bytes
+	try {
+		show_random(body, crypto);
+	} catch( problem ) {
+		console.error("Failed random", problem);
+    }
+
+    //SHA256
+    try {
+		show_digest_sha256( body, subtle );
+    } catch( problem ) {
+	    console.error("Failed digest", problem);
+    }
+}
+
+document.addEventListener("DOMContentLoaded", main )
+        </script>
+    </body>
+</html>
